@@ -148,13 +148,35 @@ class PorticoExportDom {
 
 		// galley links
 		import('classes.file.ArticleFileManager');
-			$articleFileManager = new ArticleFileManager($article->getId());
-			foreach ($article->getGalleys() as $galley) {
-				$selfUriNode =& XMLCustomWriter::createChildWithText($doc, $articleMetaNode, 'self-uri', $galley->getFileName());
-				XMLCustomWriter::setAttribute($selfUriNode, 'xlink:href', $galley->getFileName());
-				XMLCustomWriter::setAttribute($selfUriNode, 'content-type', $galley->getFileType());
+		$articleFileManager = new ArticleFileManager($article->getId());
+		foreach ($article->getGalleys() as $galley) {
+			$selfUriNode =& XMLCustomWriter::createChildWithText($doc, $articleMetaNode, 'self-uri', $galley->getFileName());
+			XMLCustomWriter::setAttribute($selfUriNode, 'xlink:href', $galley->getFileName());
+			XMLCustomWriter::setAttribute($selfUriNode, 'content-type', $galley->getFileType());
+			
+			// check for HTML-ness, and if there are additional galley files include them 
+			$isHtml = $galley->isHTMLGalley();
+	
+			if ($isHtml) {
+				$styleFile = $galley->getStyleFile();
+				if ($styleFile) {
+					$styleNode =& XMLCustomWriter::createChildWithText($doc, $articleMetaNode, 'related-object');
+					XMLCustomWriter::setAttribute($styleNode, 'xlink:href', $styleFile->getFileName());
+					XMLCustomWriter::setAttribute($styleNode, 'content-type', $styleFile->getFileType());
+					$objectNode =& XMLCustomWriter::createChildWithText($doc, $styleNode, 'object-id', $styleFile->getFileName());
+				}
+				
+				foreach ($galley->getImageFiles() as $imageFile) {
+					
+					$imageNode =& XMLCustomWriter::createChildWithText($doc, $articleMetaNode, 'graphic');
+					XMLCustomWriter::setAttribute($imageNode, 'xlink:href', $imageFile->getFileName());
+					XMLCustomWriter::setAttribute($imageNode, 'content-type', $imageFile->getFileType());
+					$objectNode =& XMLCustomWriter::createChildWithText($doc, $imageNode, 'object-id', $imageFile->getFileName());
+				}
+	
 			}
-
+		}
+			
 		/* --- Abstract --- */
 		if ($article->getLocalizedAbstract()) {
 			$abstractNode =& XMLCustomWriter::createElement($doc, 'abstract');

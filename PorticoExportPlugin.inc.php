@@ -238,6 +238,34 @@ class PorticoExportPlugin extends ImportExportPlugin {
 								$zip->addFile($filePath, $article->getId() . '/' . $filename);
 							}
 						}
+						
+						// add additional HTML files
+						$isHtml = $galley->isHTMLGalley();
+						
+						if ($isHtml) {
+							$styleFile = $galley->getStyleFile();
+							if ($styleFile) {
+								if (isset($styleFile)) {
+									$styleFileType = $styleFile->getFileType();
+									$styleFilePath = $styleFile->getFilePath();
+									if(file_exists($styleFilePath)) {
+										$styleFilename = $styleFile->getFileName();
+										$zip->addFile($styleFilePath, $article->getId() . '/' . $styleFilename);
+									}
+								}
+							}
+							
+							foreach ($galley->getImageFiles() as $imageFile) {
+								if (isset($imageFile)) {
+									$imageFileType = $imageFile->getFileType();
+									$imageFilePath = $imageFile->getFilePath();
+									if(file_exists($imageFilePath)) {
+										$imageFilename = $imageFile->getFileName();
+										$zip->addFile($imageFilePath, $article->getId() . '/' . $imageFilename);	
+									}
+								}
+							}	
+						}
 					}
 				}
 			
@@ -338,6 +366,34 @@ class PorticoExportPlugin extends ImportExportPlugin {
 						{
 							$filename = $articleFile->getFileName();
 							$zip->addFile($filePath, $article->getId() . '/' . $filename);
+						}
+						
+						// add additional HTML files
+						$isHtml = $galley->isHTMLGalley();
+						
+						if ($isHtml) {
+							$styleFile = $galley->getStyleFile();
+							if ($styleFile) {
+								if (isset($styleFile)) {
+									$styleFileType = $styleFile->getFileType();
+									$styleFilePath = $styleFile->getFilePath();
+									if(file_exists($styleFilePath)) {
+										$styleFilename = $styleFile->getFileName();
+										$zip->addFile($styleFilePath, $article->getId() . '/' . $styleFilename);
+									}
+								}
+							}
+							
+							foreach ($galley->getImageFiles() as $imageFile) {
+								if (isset($imageFile)) {
+									$imageFileType = $imageFile->getFileType();
+									$imageFilePath = $imageFile->getFilePath();
+									if(file_exists($imageFilePath)) {
+										$imageFilename = $imageFile->getFileName();
+										$zip->addFile($imageFilePath, $article->getId() . '/' . $imageFilename);
+									}
+								}
+							}	
 						}
 					}
 				}
