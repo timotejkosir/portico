@@ -98,9 +98,13 @@ class PorticoExportDom {
 		}
 
 		// volume, issue, etc.
-		XMLCustomWriter::createChildWithText($doc, $articleMetaNode, 'volume', $issue->getVolume());
-		XMLCustomWriter::createChildWithText($doc, $articleMetaNode, 'issue', $issue->getNumber(), false);
-		
+		if ($issue->getVolume()) {
+			XMLCustomWriter::createChildWithText($doc, $articleMetaNode, 'volume', $issue->getVolume());
+		}
+		if ($issue->getNumber()) {
+			XMLCustomWriter::createChildWithText($doc, $articleMetaNode, 'issue', $issue->getNumber(), false);
+		}
+
 		/* --- fpage / lpage --- */
 		// there is some ambiguity for online journals as to what
 		// "page numbers" are; for example, some journals (eg. JMIR)
