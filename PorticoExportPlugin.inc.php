@@ -197,7 +197,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 		XMLCustomWriter::appendChild($doc, $issuesNode);
 
 		// create zip file
-		$zipName = $journal->getLocalizedSetting('initials') . '_batch_' . date('Y-m-d') . '.zip';
+		$zipName = $journal->getLocalizedSetting('acronym') . '_batch_' . date('Y-m-d') . '.zip';
 		$zip = new ZipArchive();
 		$zip->open($zipName, ZipArchive::CREATE);
 
@@ -290,7 +290,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 		// create zip file
 
 		// build zipName filename
-		$zipName = $journal->getLocalizedSetting('initials');
+		$zipName = $journal->getLocalizedSetting('acronym');
 		if ($issue->getVolume()) {
 			$zipName .= '_' . $issue->getVolume();
 		}
@@ -396,7 +396,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 		$this->import('PorticoExportDom');
 		
 		// create zip file
-		$zipName = $journal->getLocalizedSetting('initials');
+		$zipName = $journal->getLocalizedSetting('acronym');
 		if ($issue->getVolume()) {
 			$zipName .= '_' . $issue->getVolume();
 		}
@@ -523,7 +523,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 		XMLCustomWriter::appendChild($doc, $issuesNode);
 
 		// create zip file
-		$zipName = $journal->getLocalizedSetting('initials') . '_batch_' . date('Y-m-d') . '.zip';
+		$zipName = $journal->getLocalizedSetting('acronym') . '_batch_' . date('Y-m-d') . '.zip';
 		$zip = new ZipArchive();
 		$zip->open($zipName, ZipArchive::CREATE);
 
