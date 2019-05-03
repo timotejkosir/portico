@@ -1,9 +1,9 @@
 {**
  * plugins/importexport/portico/index.tpl
  *
- * Copyright (c) 2014 Simon Fraser University Library
- * Copyright (c) 2003-2014 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Copyright (c) 2014-2019 Simon Fraser University Library
+ * Copyright (c) 2003-2019 John Willinsky
+ * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
  *
  * List of operations this plugin can perform
  *
@@ -15,8 +15,8 @@
 
 <p>{translate key="plugins.importexport.portico.description"}</p>
 <ul class="plain">
-	<li>&#187; <a href="{plugin_url path="settings"}">{translate key="plugins.importexport.portico.ftpConfig"}</a></li>
-	<li>&#187; <a href="{plugin_url path="issues"}">{translate key="plugins.importexport.portico.export.issues"}</a></li>
+	<li><a href="{plugin_url path="settings"}">{translate key="plugins.importexport.portico.ftpConfig"}</a></li>
+	<li><a href="{plugin_url path="issues"}">{translate key="plugins.importexport.portico.export.issues"}</a></li>
 </ul>
 <p>{translate key="plugins.importexport.portico.participate"}</p>
 <br />

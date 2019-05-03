@@ -1,9 +1,9 @@
 {**
  * plugins/importexport/portico/issues.tpl
  *
- * Copyright (c) 2014 Simon Fraser University Library
- * Copyright (c) 2003-2014 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Copyright (c) 2014-2019 Simon Fraser University Library
+ * Copyright (c) 2003-2019 John Willinsky
+ * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
  *
  * List of issues to potentially export
  *
@@ -72,19 +72,21 @@ function toggleChecked() {
 	</tr>
 {/if}
 </table>
-
-{url|assign:"setupUrl" page="manager" op="setup" path="1"}
 {if !$issn}
-	<p><strong>{translate key="plugins.importexport.portico.issnWarning" setupUrl=$setupUrl}</strong></p>
+			<p><strong>{translate key="plugins.importexport.portico.issnWarning" setupUrl=$contextSettingsUrl}</strong></p>
 {/if}
 {if !$abbreviation}
-	<p><strong>{translate key="plugins.importexport.portico.abbreviationWarning" setupUrl=$setupUrl}</strong></p>
+			<p><strong>{translate key="plugins.importexport.portico.abbreviationWarning" setupUrl=$contextSettingsUrl}</strong></p>
 {/if}
 <table width="30%">
 <tr>
-	<td><input type="radio" name="export" value="download" checked="true"/>Download Issues<br />
-<input type="radio" name="export" value="ftp"/> FTP Issues</td>
-<td><input type="submit" value="{translate key="common.export"}" class="button defaultButton"/>&nbsp;<input type="button" value="{translate key="common.selectAll"}" class="button" onclick="toggleChecked()" /></td>
+				<td>
+					<input type="radio" name="export" value="download" checked="true"/>Download Issues<br />
+					<input type="radio" name="export" value="ftp"/> FTP Issues
+				</td>
+				<td>
+					<input type="submit" value="{translate key="common.export"}" class="button defaultButton"/>&nbsp;<input type="button" value="{translate key="common.selectAll"}" class="button" onclick="toggleChecked()" />
+				</td>
 </tr>
 </table>
 </form>

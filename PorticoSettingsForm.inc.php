@@ -3,9 +3,9 @@
 /**
  * @file plugins/importexport/portico/PorticoSettingsForm.inc.php
  *
- * Copyright (c) 2014 Simon Fraser University Library
- * Copyright (c) 2003-2014 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Copyright (c) 2014-2019 Simon Fraser University Library
+ * Copyright (c) 2003-2019 John Willinsky
+ * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
  *
  * @class PorticoSettingsForm
  * @ingroup plugins_importexport_portico
@@ -33,7 +33,7 @@ class PorticoSettingsForm extends Form {
 		$this->journalId = $journalId;
 		$this->plugin =& $plugin;
 
-		parent::__construct($plugin->getTemplatePath() . 'settingsForm.tpl');
+		parent::__construct($plugin->getTemplateResource('settingsForm.tpl'));
 
 		$this->addCheck(new FormValidator($this, 'porticoHost', 'required', 'plugins.importexport.portico.manager.settings.porticoHostRequired'));
 
@@ -72,5 +72,3 @@ class PorticoSettingsForm extends Form {
 		$plugin->updateSetting($journalId, 'porticoPassword', $this->getData('porticoPassword'));
 	}
 }
-
-?>
