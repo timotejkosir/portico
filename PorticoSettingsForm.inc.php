@@ -3,9 +3,9 @@
 /**
  * @file plugins/importexport/portico/PorticoSettingsForm.inc.php
  *
- * Copyright (c) 2014-2019 Simon Fraser University Library
+ * Copyright (c) 2014-2019 Simon Fraser University
  * Copyright (c) 2003-2019 John Willinsky
- * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
+ * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
  *
  * @class PorticoSettingsForm
  * @ingroup plugins_importexport_portico
@@ -19,56 +19,52 @@ import('lib.pkp.classes.form.Form');
 class PorticoSettingsForm extends Form {
 
 	/** @var $journalId int */
-	var $journalId;
+	private $journalId;
 
-	/** @var $plugin object */
-	var $plugin;
+	/** @var $plugin PorticoExportPlugin */
+	private $plugin;
+
+	/** @var $fields array */
+	private $fields = ['porticoHost', 'porticoUsername', 'porticoPassword'];
 
 	/**
 	 * Constructor
-	 * @param $plugin object
+	 * @param $plugin PorticoExportPlugin
 	 * @param $journalId int
 	 */
-	function PorticoSettingsForm(&$plugin, $journalId) {
+	public function __construct(PorticoExportPlugin $plugin, $journalId) {
 		$this->journalId = $journalId;
-		$this->plugin =& $plugin;
+		$this->plugin = $plugin;
 
-		parent::__construct($plugin->getTemplateResource('settingsForm.tpl'));
+		parent::__construct($this->plugin->getTemplateResource('settingsForm.tpl'));
 
-		$this->addCheck(new FormValidator($this, 'porticoHost', 'required', 'plugins.importexport.portico.manager.settings.porticoHostRequired'));
-
-		$this->addCheck(new FormValidator($this, 'porticoUsername', 'required', 'plugins.importexport.portico.manager.settings.porticoUsernameRequired'));
-		$this->addCheck(new FormValidator($this, 'porticoPassword', 'required', 'plugins.importexport.portico.manager.settings.porticoPasswordRequired'));
+		foreach($this->fields as $name) {
+			$this->addCheck(new FormValidator($this, $name, 'required', 'plugins.importexport.portico.manager.settings.' . $name . 'Required'));
+		}
 	}
 
 	/**
-	 * Initialize form data.
+	 * @copydoc Form::initData()
 	 */
-	function initData() {
-		$journalId = $this->journalId;
-		$plugin =& $this->plugin;
-
-		$this->setData('porticoHost', $plugin->getSetting($journalId, 'porticoHost'));
-		$this->setData('porticoUsername', $plugin->getSetting($journalId, 'porticoUsername'));
-		$this->setData('porticoPassword', $plugin->getSetting($journalId, 'porticoPassword'));
+	public function initData() {
+		foreach($this->fields as $name) {
+			$this->setData($name, $this->plugin->getSetting($this->journalId, $name));
+		}
 	}
 
 	/**
-	 * Assign form data to user-submitted data.
+	 * @copydoc Form::readInputData()
 	 */
-	function readInputData() {
-		$this->readUserVars(array('porticoHost', 'porticoUsername', 'porticoPassword'));
+	public function readInputData() {
+		$this->readUserVars($this->fields);
 	}
 
 	/**
-	 * Save settings. 
+	 * @copydoc Form::execute()
 	 */
-	function execute() {
-		$plugin =& $this->plugin;
-		$journalId = $this->journalId;
-
-		$plugin->updateSetting($journalId, 'porticoHost', $this->getData('porticoHost'));
-		$plugin->updateSetting($journalId, 'porticoUsername', $this->getData('porticoUsername'));
-		$plugin->updateSetting($journalId, 'porticoPassword', $this->getData('porticoPassword'));
+	public function execute() {
+		foreach($this->fields as $name) {
+			$this->plugin->updateSetting($this->journalId, $name, $this->getData($name));
+		}
 	}
 }
