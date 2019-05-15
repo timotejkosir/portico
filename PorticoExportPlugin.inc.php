@@ -49,7 +49,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 	/**
 	 * @copydoc ImportExportPlugin::display()
 	 */
-	public function display($args, Request $request) {
+	public function display($args, $request) {
 		parent::display($args, $request);
 		$templateManager = TemplateManager::getManager();
 		$journal = $request->getContext();
@@ -60,7 +60,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 			case 'export':
 				$issueIds = $request->getUserVar('selectedIssues') ?? [];
 				if (!count($issueIds)) {
-					$templateManager->assign('porticoErrorMessage', __('plugins.importexport.portico.export.failure.noIssue'));
+					$templateManager->assign('porticoErrorMessage', __('plugins.importexport.portico.export.failure.noIssueSelected'));
 					break;
 				}
 				try {
@@ -177,7 +177,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 
 			// add submission XML
 			foreach ($publishedArticleDao->getPublishedArticles($issue->getId()) as $article) {
-				$doc = XMLCustomWriter::createDocument('article', PUBMED_DTD_ID, PUBMED_DTD_URL);
+				$doc = XMLCustomWriter::createDocument('article', PorticoExportDom::PUBMED_DTD_ID, PorticoExportDom::PUBMED_DTD_URL);
 				$articleNode = PorticoExportDom::generateArticleDom($doc, $journal, $issue, $article);
 				XMLCustomWriter::appendChild($doc, $articleNode);
 				$articlePathName = $article->getId() . '/' . $article->getId() . '.xml';

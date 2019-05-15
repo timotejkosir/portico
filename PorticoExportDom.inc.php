@@ -15,16 +15,20 @@
 
 import('lib.pkp.classes.xml.XMLCustomWriter');
 
-define('PUBMED_DTD_URL', 'http://dtd.nlm.nih.gov/archiving/3.0/archivearticle3.dtd');
-define('PUBMED_DTD_ID', '-//NLM//DTD Journal Publishing DTD v3.0 20080202//EN');
-
 class PorticoExportDom extends XMLCustomWriter {
+	/** @var string DTD URL of the exported XML */
+	const PUBMED_DTD_URL = 'http://dtd.nlm.nih.gov/archiving/3.0/archivearticle3.dtd';
+
+	/** @var string DTD ID of the exported XML */
+	const PUBMED_DTD_ID = '-//NLM//DTD Journal Publishing DTD v3.0 20080202//EN';
+
 	/**
 	 * Generate the Article node.
 	 * @param $doc DOMDocument
 	 * @param $journal Journal
 	 * @param $issue Issue
 	 * @param $article PublishedArticle
+	 * @return DOMElement
 	 */
 	public function generateArticleDom(DOMDocument $doc, Journal $journal, Issue $issue, PublishedArticle $article) {
 		/* --- Article --- */
@@ -40,8 +44,8 @@ class PorticoExportDom extends XMLCustomWriter {
 		self::appendChild($articleNode, $journalMetaNode);
 
 		// journal-id
-		if ($journal->getLocalizedSetting("abbreviation")) {
-			self::createChildWithText($doc, $journalMetaNode, 'journal-id', $journal->getLocalizedSetting("abbreviation"));
+		if ($journal->getLocalizedSetting('abbreviation')) {
+			self::createChildWithText($doc, $journalMetaNode, 'journal-id', $journal->getLocalizedSetting('abbreviation'));
 		}
 
 		//journal-title-group
@@ -117,12 +121,12 @@ class PorticoExportDom extends XMLCustomWriter {
 		// use the "e-location ID" as the "page numbers" in PubMed
 		$pages = $article->getPages();
 		$fpage = $lpage = null;
-		if (PKPString::regexp_match_get("/([0-9]+)\s*-\s*([0-9]+)/i", $pages, $matches)) {
+		if (PKPString::regexp_match_get('/([0-9]+)\s*-\s*([0-9]+)/i', $pages, $matches)) {
 			// simple pagination (eg. "pp. 3- 		8")
 			list(, $fpage, $lpage) = $matches;
-		} elseif (PKPString::regexp_match_get("/(e[0-9]+)\s*-\s*(e[0-9]+)/i", $pages, $matches)) { // e9 - e14, treated as page ranges
+		} elseif (PKPString::regexp_match_get('/(e[0-9]+)\s*-\s*(e[0-9]+)/i', $pages, $matches)) { // e9 - e14, treated as page ranges
 			list(, $fpage, $lpage) = $matches;
-		} elseif (PKPString::regexp_match_get("/(e[0-9]+)/i", $pages, $matches)) {
+		} elseif (PKPString::regexp_match_get('/(e[0-9]+)/i', $pages, $matches)) {
 			// single elocation-id (eg. "e12")
 			$fpage = $lpage = $matches[1];
 		} else {
@@ -151,15 +155,15 @@ class PorticoExportDom extends XMLCustomWriter {
 
 		foreach ($suppFiles as $suppFile) {
 			$supplementaryMaterialNode = self::createChildWithText($doc, $articleMetaNode, 'supplementary-material', null);
-			self::setAttribute($supplementaryMaterialNode, 'xlink:href', $suppFile->getLocalizedName());
+			self::setAttribute($supplementaryMaterialNode, 'xlink:href', $suppFile->getFile()->getLocalizedName());
 			self::setAttribute($supplementaryMaterialNode, 'content-type', $suppFile->getFileType());
 		}
 
 		// galley links
 		import('lib.pkp.classes.file.SubmissionFileManager');
 		foreach ($article->getGalleys() as $galley) {
-			$selfUriNode = self::createChildWithText($doc, $articleMetaNode, 'self-uri', $galley->getLocalizedName());
-			self::setAttribute($selfUriNode, 'xlink:href', $galley->getLocalizedName());
+			$selfUriNode = self::createChildWithText($doc, $articleMetaNode, 'self-uri', $galley->getFile()->getLocalizedName());
+			self::setAttribute($selfUriNode, 'xlink:href', $galley->getFile()->getLocalizedName());
 			self::setAttribute($selfUriNode, 'content-type', $galley->getFileType());
 		}
 
@@ -178,6 +182,7 @@ class PorticoExportDom extends XMLCustomWriter {
 	 * @param $doc DOMDocument
 	 * @param $author Author
 	 * @param $authorIndex 0-based index of current author
+	 * @return DOMElement
 	 */
 	private function generateAuthorDom(DOMDocument $doc, Author $author, $authorIndex) {
 		$locale = AppLocale::getLocale();
@@ -198,6 +203,13 @@ class PorticoExportDom extends XMLCustomWriter {
 		return $root;
 	}
 
+	/**
+	 * Creates pub-date node
+	 * @param $doc DOMDocument
+	 * @param $pubdate string
+	 * @param $pubstatus string
+	 * @return DOMElement
+	 */
 	private function generatePubDateDom(DOMDocument $doc, $pubdate, $pubstatus) {
 		$root = self::createElement($doc, 'pub-date');
 

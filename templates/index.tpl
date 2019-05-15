@@ -33,10 +33,10 @@
 				$('#exportIssuesXmlForm').pkpHandler('$.pkp.controllers.form.FormHandler');
 			{rdelim});
 			{literal}
-			function toggleChecked() {
-				var elements = document.getElementsByName("issueId[]");
-				for (var i=0; i < elements.length; i++) {
-						elements[i].checked = true
+			function toggleIssues() {
+				var elements = document.querySelectorAll("#exportIssuesXmlForm input[type=checkbox]");
+				for (var i = elements.length; i--; ) {
+						elements[i].checked ^= true;
 				}
 			}
 			{/literal}
@@ -63,7 +63,7 @@
 				{fbvFormSection}
 					{fbvElement type="submit" label="plugins.importexport.native.exportIssues" id="exportIssues" name="type" value="download" inline=true}
 					{fbvElement type="submit" label="plugins.importexport.portico.export.ftp" id="exportFTP" name="type" value="ftp" inline=true}
-					<input type="button" value="{translate key="common.selectAll"}" class="button" onclick="toggleChecked()" />
+					<input type="button" value="{translate key="plugins.importexport.portico.export.toggleSelection"|escape}" class="pkp_button" onclick="toggleIssues()" />
 				{/fbvFormSection}
 			{/fbvFormArea}
 		</form>
