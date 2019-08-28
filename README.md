@@ -1,7 +1,7 @@
 ```
 ================================================
 === OJS Portico Export Plugin
-=== Version: 1.0.0.1
+=== Version: 1.0.0.2
 === Author: James MacGregor <jmacgreg@gmail.com>
 ================================================
 ```
@@ -17,6 +17,10 @@ complete terms of this license.
 
 # System Requirements
 Same requirements as the OJS 3.x core.
+
+# Compatibility
+
+OJS 3.1.0+. 
 
 # Installation
 To install the plugin:
