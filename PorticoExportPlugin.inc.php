@@ -3,8 +3,8 @@
 /**
  * @file plugins/importexport/portico/PorticoExportPlugin.inc.php
  *
- * Copyright (c) 2014-2019 Simon Fraser University
- * Copyright (c) 2003-2019 John Willinsky
+ * Copyright (c) 2014-2020 Simon Fraser University
+ * Copyright (c) 2003-2020 John Willinsky
  * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
  *
  * @class PorticoExportPlugin
@@ -194,30 +194,9 @@ class PorticoExportPlugin extends ImportExportPlugin {
 						: $galleyDao->getById($galleyId, $article->getId());
 
 					if ($galley && ($submissionFile = $submissionFileDAO->getLatestRevision($galley->getFileId(), null, $article->getId()))) {
-						if (file_exists($filePath = $submissionFile->getFilePath()))
-						{
+						if (file_exists($filePath = $submissionFile->getFilePath())) {
 							if (!$zip->addFile($filePath, $article->getId() . '/' . $submissionFile->getLocalizedName())) {
 								throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
-							}
-						}
-					}
-				}
-
-				// add supplementary files
-				$submissionFileManager = new SubmissionFileManager($article->getContextId(), $article->getId());
-				$suppFiles = $galleyDao->getBySubmissionId($article->getId(), $article->getContextId())->toArray();
-				foreach ($suppFiles as $suppFile) {
-					$suppId = $suppFile->getFileId();
-					$suppFile = $journal->getSetting('rtSupplementaryFiles')
-						? $submissionFileDAO->getLatestRevision((int) $suppId, null, $article->getId())
-						: $submissionFileDAO->getByBestId((int) $suppId, $article->getId());
-					if ($suppFile) {
-						if ($articleFile = $submissionFileManager->_getFile($suppFile->getFileId())) {
-							if(file_exists($filePath = $articleFile->getFilePath())) {
-								$filename = $suppFile->getOriginalFileName();
-								if (!$zip->addFile($filePath, $article->getId() . '/' . $filename)) {
-									throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
-								}
 							}
 						}
 					}
