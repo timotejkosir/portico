@@ -3,8 +3,8 @@
 /**
  * @file plugins/importexport/portico/PorticoExportDom.inc.php
  *
- * Copyright (c) 2014-2019 Simon Fraser University
- * Copyright (c) 2003-2019 John Willinsky
+ * Copyright (c) 2014-2020 Simon Fraser University
+ * Copyright (c) 2003-2020 John Willinsky
  * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
  *
  * @class PorticoExportDom
@@ -122,7 +122,7 @@ class PorticoExportDom extends XMLCustomWriter {
 		$pages = $article->getPages();
 		$fpage = $lpage = null;
 		if (PKPString::regexp_match_get('/([0-9]+)\s*-\s*([0-9]+)/i', $pages, $matches)) {
-			// simple pagination (eg. "pp. 3- 		8")
+			// simple pagination (eg. "pp. 3-8")
 			list(, $fpage, $lpage) = $matches;
 		} elseif (PKPString::regexp_match_get('/(e[0-9]+)\s*-\s*(e[0-9]+)/i', $pages, $matches)) { // e9 - e14, treated as page ranges
 			list(, $fpage, $lpage) = $matches;
@@ -149,18 +149,7 @@ class PorticoExportDom extends XMLCustomWriter {
 			self::setAttribute($articleIdNode, 'pub-id-type', 'publisher');
 		}
 
-		// supplementary file links
-		$galleyDao = DAORegistry::getDAO('ArticleGalleyDAO');
-		$suppFiles = $galleyDao->getBySubmissionId($article->getId(), $article->getContextId())->toArray();
-
-		foreach ($suppFiles as $suppFile) {
-			$supplementaryMaterialNode = self::createChildWithText($doc, $articleMetaNode, 'supplementary-material', null);
-			self::setAttribute($supplementaryMaterialNode, 'xlink:href', $suppFile->getFile()->getLocalizedName());
-			self::setAttribute($supplementaryMaterialNode, 'content-type', $suppFile->getFileType());
-		}
-
 		// galley links
-		import('lib.pkp.classes.file.SubmissionFileManager');
 		foreach ($article->getGalleys() as $galley) {
 			$selfUriNode = self::createChildWithText($doc, $articleMetaNode, 'self-uri', $galley->getFile()->getLocalizedName());
 			self::setAttribute($selfUriNode, 'xlink:href', $galley->getFile()->getLocalizedName());
