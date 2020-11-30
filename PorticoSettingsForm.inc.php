@@ -18,8 +18,8 @@ import('lib.pkp.classes.form.Form');
 
 class PorticoSettingsForm extends Form {
 
-	/** @var $journalId int */
-	private $journalId;
+	/** @var $contextId int */
+	private $contextId;
 
 	/** @var $plugin PorticoExportPlugin */
 	private $plugin;
@@ -30,10 +30,10 @@ class PorticoSettingsForm extends Form {
 	/**
 	 * Constructor
 	 * @param $plugin PorticoExportPlugin
-	 * @param $journalId int
+	 * @param $contextId int
 	 */
-	public function __construct(PorticoExportPlugin $plugin, $journalId) {
-		$this->journalId = $journalId;
+	public function __construct(PorticoExportPlugin $plugin, $contextId) {
+		$this->contextId = $contextId;
 		$this->plugin = $plugin;
 
 		parent::__construct($this->plugin->getTemplateResource('settingsForm.tpl'));
@@ -48,7 +48,7 @@ class PorticoSettingsForm extends Form {
 	 */
 	public function initData() {
 		foreach($this->fields as $name) {
-			$this->setData($name, $this->plugin->getSetting($this->journalId, $name));
+			$this->setData($name, $this->plugin->getSetting($this->contextId, $name));
 		}
 	}
 
@@ -62,9 +62,9 @@ class PorticoSettingsForm extends Form {
 	/**
 	 * @copydoc Form::execute()
 	 */
-	public function execute() {
+	public function execute(...$functionArgs) {
 		foreach($this->fields as $name) {
-			$this->plugin->updateSetting($this->journalId, $name, $this->getData($name));
+			$this->plugin->updateSetting($this->contextId, $name, $this->getData($name));
 		}
 	}
 }
