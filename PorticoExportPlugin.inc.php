@@ -46,6 +46,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 							$templateManager->assign('porticoSuccessMessage', __('plugins.importexport.portico.export.success'));
 						} else {
 							$this->_download($path);
+							return;
 						}
 					}
 					finally {
@@ -55,7 +56,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 				catch (Exception $e) {
 					$templateManager->assign('porticoErrorMessage', $e->getMessage());
 				}
-				return;
+				break;
 		}
 
 		// set the issn and abbreviation template variables
