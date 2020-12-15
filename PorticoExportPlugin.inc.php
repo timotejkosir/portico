@@ -132,14 +132,13 @@ class PorticoExportPlugin extends ImportExportPlugin {
 	 * @return string the path of the creates zip file
 	 */
 	private function _createFile(array $issueIds) : string {
-		import('lib.pkp.classes.xml.XMLCustomWriter');
-		import('lib.pkp.classes.file.SubmissionFileManager');
 		$this->import('PorticoExportDom');
 
 		// create zip file
 		$path = tempnam(sys_get_temp_dir(), 'tmp');
 		$zip = new ZipArchive();
 		if ($zip->open($path, ZipArchive::CREATE) !== true) {
+			error_log('Unable to create Portico ZIP: ' . $zip->getStatusString());
 			throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
 		}
 		try {
@@ -161,17 +160,21 @@ class PorticoExportPlugin extends ImportExportPlugin {
 					$document = new PorticoExportDom($this->_context, $issue, $article);
 					$articlePathName = $article->getId() . '/' . $article->getId() . '.xml';
 					if (!$zip->addFromString($articlePathName, $document)) {
+						error_log("Unable add $articlePathName to Portico ZIP");
 						throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
 					}
 
 					// add galleys
+					$fileService = Services::get('file');
+					$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO');
 					foreach ($article->getGalleys() as $galley) {
-						if ($submissionFile = $galley->getFile()) {
-							if (file_exists($filePath = $submissionFile->getFilePath())) {
-								if (!$zip->addFile($filePath, $article->getId() . '/' . $submissionFile->getClientFileName())) {
-									throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
-								}
-							}
+						$submissionFile = $submissionFileDao->getById($galley->getData('submissionFileId'));
+						if (!$submissionFile) continue;
+
+						$filePath = $fileService->getPath($submissionFile->getData('fileId'));
+						if (!$zip->addFromString($article->getId() . '/' . basename($filePath), $fileService->fs->read($filePath))) {
+							error_log("Unable add file $filePath to Portico ZIP");
+							throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
 						}
 					}
 				}
@@ -179,6 +182,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 		}
 		finally {
 			if (!$zip->close()) {
+				error_log('Unable to close Portico ZIP: ' . $zip->getStatusString());
 				throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
 			}
 		}

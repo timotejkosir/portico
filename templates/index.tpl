@@ -8,8 +8,9 @@
  * List of operations this plugin can perform
  *
  *}
-{include file="common/header.tpl" pageTitle="plugins.importexport.portico.displayName"}
+{extends file="layouts/backend.tpl"}
 
+{block name="page"}
 <script>
 	// Attach the JS file tab handler.
 	$(function() {ldelim}
@@ -70,4 +71,4 @@
 	</div>
 </div>
 
-{include file="common/footer.tpl"}
+{/block}
