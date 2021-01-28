@@ -15,10 +15,10 @@
 
 class PorticoExportDom {
 	/** @var string DTD URL of the exported XML */
-	private const PUBMED_DTD_URL = 'http://dtd.nlm.nih.gov/archiving/3.0/archivearticle3.dtd';
+	private const PUBMED_DTD_URL = 'http://jats.nlm.nih.gov/archiving/1.2/JATS-archivearticle1.dtd';
 
 	/** @var string DTD ID of the exported XML */
-	private const PUBMED_DTD_ID = '-//NLM//DTD Journal Publishing DTD v3.0 20080202//EN';
+	private const PUBMED_DTD_ID = '-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.2 20190208//EN';
 
 	/** @var Context Context */
 	private $_context;
@@ -95,10 +95,11 @@ class PorticoExportDom {
 		$journalTitleGroupNode->appendChild($doc->createElement('journal-title', $journal->getLocalizedPageHeaderTitle()));
 
 		// issn
-		foreach (['printIssn', 'issn', 'onlineIssn'] as $name) {
+		foreach (['printIssn' => 'print', 'onlineIssn' => 'online-only'] as $name => $format) {
 			if ($issn = $journal->getSetting($name)) {
-				$journalMetaNode->appendChild($doc->createElement('issn', $issn));
-				break;
+				$journalMetaNode
+					->appendChild($doc->createElement('issn', $issn))
+					->setAttribute('publication-format', $format);
 			}
 		}
 
@@ -117,10 +118,21 @@ class PorticoExportDom {
 		$articleNode->appendChild($articleMetaNode);
 
 		// article-id (DOI)
-		if (($doi = $article->getStoredPubId('doi')) != '') {
+		if (($doi = $article->getStoredPubId('doi'))) {
 			$doiNode = $doc->createElement('article-id', $doi);
 			$doiNode->setAttribute('pub-id-type', 'doi');
 			$articleMetaNode->appendChild($doiNode);
+		}
+
+		// article-id (PII)
+		// Pubmed will accept two types of article identifier: pii and doi
+		// how this is handled is journal-specific, and will require either
+		// configuration in the plugin, or an update to the core code.
+		// this is also related to DOI-handling within OJS
+		if ($publisherId = $article->getStoredPubId('publisher-id')) {
+			$publisherIdNode = $doc->createElement('article-id', $publisherId);
+			$publisherIdNode->setAttribute('pub-id-type', 'publisher-id');
+			$articleMetaNode->appendChild($publisherIdNode);
 		}
 
 		// article-title
@@ -139,38 +151,26 @@ class PorticoExportDom {
 
 		// volume, issue, etc.
 		if ($v = $issue->getVolume()) $articleMetaNode->appendChild($doc->createElement('volume', $v));
-		if ($n = $issue->getNumber()) $articleMetaNode->appendChild($doc->createElement('number', $n));
+		if ($n = $issue->getNumber()) $articleMetaNode->appendChild($doc->createElement('issue', $n));
 		$this->_buildPages($articleMetaNode);
 
-		/* --- ArticleIdList --- */
-		// Pubmed will accept two types of article identifier: pii and doi
-		// how this is handled is journal-specific, and will require either
-		// configuration in the plugin, or an update to the core code.
-		// this is also related to DOI-handling within OJS
-		if ($publisherId = $article->getStoredPubId('publisher-id')) {
-			$articleIdListNode = $doc->createElement('ArticleIdList');
-			$articleNode->appendChild($articleIdListNode);
-
-			$articleIdNode = $articleIdListNode->appendChild($doc->createElement('article-id', $publisherId));
-			$articleIdNode->setAttribute('pub-id-type', 'publisher');
+		$galleys = $article->getGalleys();
+		// supplementary-material (the first galley is reserved for the self-uri link)
+		foreach (array_slice($galleys, 1) as $galley) {
+			if ($supplementNode = $this->_buildSupplementNode($galley)) {
+				$articleMetaNode->appendChild($supplementNode);
+			} else {
+				error_log('Unable to add galley ' . $galley->getData('id') . ' to article ' . $article->getId());
+			}
 		}
 
-		// galley links
-		$fileService = Services::get('file');
-		$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO');
-		foreach ($article->getGalleys() as $galley) {
-			if ($url = $galley->getRemoteURL()) {
-				$selfUriNode = $doc->createElement('self-uri', $url);
-				$selfUriNode->setAttribute('xlink:href', $url);
+		// self-uri
+		if ($galley = reset($galleys)) {
+			if ($selfUriNode = $this->_buildSelfUriNode($galley)) {
+				$articleMetaNode->appendChild($selfUriNode);
 			} else {
-				$submissionFile = $submissionFileDao->getById($galley->getData('submissionFileId'));
-				$filePath = $fileService->getPath($submissionFile->getData('fileId'));
-				$archivePath = $article->getId() . '/' . basename($filePath);
-				$selfUriNode = $doc->createElement('self-uri', $archivePath);
-				$selfUriNode->setAttribute('content-type', $fileService->fs->getMimetype($filePath));
-				$selfUriNode->setAttribute('xlink:href', $archivePath);
+				error_log('Unable to add galley ' . $galley->getData('id') . ' to article ' . $article->getId());
 			}
-			$articleMetaNode->appendChild($selfUriNode);
 		}
 
 		/* --- Abstract --- */
@@ -181,6 +181,73 @@ class PorticoExportDom {
 		}
 
 		return $root;
+	}
+
+	/**
+	 * Retrieve the file information from a galley
+	 * @param ArticleGalley $galley Galley instance
+	 * @return array
+	 */
+	private function _getFileInformation(ArticleGalley $galley) {
+		if (!($fileId = $galley->getData('submissionFileId'))) {
+			return null;
+		}
+		$fileService = Services::get('file');
+		$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO');
+		$submissionFile = $submissionFileDao->getById($fileId);
+		$file = $fileService->get($submissionFile->getData('fileId'));
+		return [
+			'path' => $this->_article->getId() . '/' . basename($file->path),
+			'mimetype' => $file->mimetype
+		];
+	}
+
+	/**
+	 * Generate the self-uri node of the article.
+	 * @param ArticleGalley $galley Galley instance
+	 * @return DOMElement
+	 */
+	private function _buildSelfUriNode(ArticleGalley $galley) : DOMElement {
+		$doc = $this->_document;
+		$node = null;
+		if ($fileInfo = $this->_getFileInformation($galley)) {
+			['path' => $path, 'mimetype' => $mimetype] = $fileInfo;
+			$node = $doc->createElement('self-uri', $path);
+			$node->setAttribute('content-type', $mimetype);
+			$node->setAttribute('xlink:href', $path);
+		} elseif ($url = $galley->getRemoteURL()) {
+			$node = $doc->createElement('self-uri', $url);
+			$node->setAttribute('xlink:href', $url);
+		}
+		if ($label = $galley->getLabel()) {
+			$node->setAttribute('xlink:title', $label);
+		}
+		return $node;
+	}
+
+	/**
+	 * Generate a supplementary-material node for a galley.
+	 * @param ArticleGalley $galley Galley instance
+	 * @return DOMElement
+	 */
+	private function _buildSupplementNode(ArticleGalley $galley) : DOMElement {
+		$doc = $this->_document;
+		$node = $doc->createElement('supplementary-material');
+		if ($fileInfo = $this->_getFileInformation($galley)) {
+			['path' => $path, 'mimetype' => $mimetype] = $fileInfo;
+			$node->setAttribute('mimetype', $mimetype);
+			$node->setAttribute('xlink:href', $path);
+		} elseif ($url = $galley->getRemoteURL()) {
+			$node->setAttribute('xlink:href', $url);
+		} else {
+			return null;
+		}
+		if ($label = $galley->getData('label')) {
+			$node->setAttribute('xlink:title', $label);
+			$captionNode = $node->appendChild($doc->createElement('caption'));
+			$captionNode->appendChild($doc->createElement('p', $label));
+		}
+		return $node;
 	}
 
 	/**

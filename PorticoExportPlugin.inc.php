@@ -60,7 +60,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 		}
 
 		// set the issn and abbreviation template variables
-		foreach (['onlineIssn', 'printIssn', 'issn'] as $name) {
+		foreach (['onlineIssn', 'printIssn'] as $name) {
 			if ($value = $this->_context->getSetting($name)) {
 				$templateManager->assign('issn', $value);
 				break;
@@ -152,7 +152,6 @@ class PorticoExportPlugin extends ImportExportPlugin {
 				$submissions = Services::get('submission')->getMany([
 					'contextId' => $this->_context->getId(),
 					'issueIds' => [$issueId],
-					'status' => [STATUS_PUBLISHED],
 					'orderBy' => 'seq',
 					'orderDirection' => 'ASC',
 				]);
@@ -171,7 +170,7 @@ class PorticoExportPlugin extends ImportExportPlugin {
 						$submissionFile = $submissionFileDao->getById($galley->getData('submissionFileId'));
 						if (!$submissionFile) continue;
 
-						$filePath = $fileService->getPath($submissionFile->getData('fileId'));
+						$filePath = $fileService->get($submissionFile->getData('fileId'))->path;
 						if (!$zip->addFromString($article->getId() . '/' . basename($filePath), $fileService->fs->read($filePath))) {
 							error_log("Unable add file $filePath to Portico ZIP");
 							throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
