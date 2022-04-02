@@ -14,8 +14,9 @@
 <script>
 	// Attach the JS file tab handler.
 	$(function() {ldelim}
-		$('#exportTabs').pkpHandler('$.pkp.controllers.TabHandler');
-		$('#exportTabs').tabs('option', 'cache', true);
+		$('#exportTabs')
+			.pkpHandler('$.pkp.controllers.TabHandler')
+			.tabs('option', 'cache', true);
 	{rdelim});
 </script>
 <div id="exportTabs">
@@ -31,7 +32,10 @@
 		<script>
 			$(function() {ldelim}
 				// Attach the form handler.
-				$('#exportIssuesXmlForm').pkpHandler('$.pkp.controllers.form.FormHandler');
+				var form = $('#exportIssuesXmlForm').pkpHandler('$.pkp.controllers.form.FormHandler');
+				form.find('button[type=submit]').click(function () {
+					form.trigger('unregisterAllForms');
+				});
 			{rdelim});
 			{literal}
 			function toggleIssues() {
