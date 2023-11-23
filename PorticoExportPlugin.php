@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file PorticoExportPlugin.inc.php
+ * @file PorticoExportPlugin.php
  *
  * Copyright (c) 2014-2022 Simon Fraser University
  * Copyright (c) 2003-2022 John Willinsky
@@ -11,7 +11,18 @@
  * @brief Portico export plugin
  */
 
-import('lib.pkp.classes.plugins.ImportExportPlugin');
+namespace APP\plugins\importexport\portico;
+
+use PKP\plugins\ImportExportPlugin;
+use ZipArchive;
+use Exception;
+use PKP\core\JSONMessage;
+use APP\template\TemplateManager;
+use PKP\db\DAORegistry;
+use APP\i18n\AppLocale;
+use APP\notification\NotificationManager;
+use APP\facades\Repo;
+use APP\core\Services;
 
 class PorticoExportPlugin extends ImportExportPlugin
 {
@@ -27,6 +38,7 @@ class PorticoExportPlugin extends ImportExportPlugin
 
         parent::display($args, $request);
         $templateManager = TemplateManager::getManager();
+        $templateManager->assign('pluginName', self::class);
 
         switch ($route = array_shift($args)) {
             case 'settings':
@@ -138,31 +150,43 @@ class PorticoExportPlugin extends ImportExportPlugin
         foreach ($endpoints as $credentials) {
             switch ($credentials['type']) {
                 case 'ftp':
-                    $adapter = new League\Flysystem\Adapter\Ftp([
+                    $adapter = new \League\Flysystem\Ftp\FtpAdapter(\League\Flysystem\Ftp\FtpConnectionOptions::fromArray([
                         'host' => $credentials['hostname'],
                         'port' => ($credentials['port'] ?? null) ?: 21,
                         'username' => $credentials['username'],
                         'password' => $credentials['password'],
                         'root' => $credentials['path'],
-                    ]);
+                    ]));
                     break;
                 case 'loc':
                 case 'portico':
                 case 'sftp':
-                    $adapter = new League\Flysystem\Sftp\SftpAdapter([
-                        'host' => $credentials['hostname'],
-                        'username' => $credentials['username'],
-                        'password' => $credentials['private_key'] ? null : $credentials['password'],
-                        'port' => ($credentials['port'] ?? null) ?: 22,
-                        'root' => $credentials['path'],
-                        'privateKey' => ($credentials['private_key'] ?? null) ?: null,
-                        'passphrase' => ($credentials['passphrase'] ?? null) ?: null,
-                    ]);
+                    $adapter = new \League\Flysystem\PhpseclibV3\SftpAdapter(
+                        new \League\Flysystem\PhpseclibV3\SftpConnectionProvider(
+                            $credentials['hostname'],
+                            $credentials['username'],
+                            $credentials['private_key'] ? null : $credentials['password'],
+                            $credentials['private_key'] ?? null,
+                            $credentials['passphrase'] ?? null,
+                            ($credentials['port'] ?? null) ?: 22,
+                        ),
+                        $credentials['path'],
+                        \League\Flysystem\UnixVisibility\PortableVisibilityConverter::fromArray([
+                            'file' => [
+                                'public' => 0640,
+                                'private' => 0604,
+                            ],
+                            'dir' => [
+                                'public' => 0740,
+                                'private' => 7604,
+                            ],
+                        ])
+                    );
                     break;
                 default:
                     throw new Exception('Unknown endpoint type!');
             }
-            $fs = new League\Flysystem\Filesystem($adapter);
+            $fs = new \League\Flysystem\Filesystem($adapter);
             $fp = fopen($path, 'r');
             $fs->writeStream($this->_createFilename(), $fp);
             fclose($fp);
@@ -176,8 +200,6 @@ class PorticoExportPlugin extends ImportExportPlugin
      */
     private function _createFile(array $issueIds): string
     {
-        $this->import('PorticoExportDom');
-
         // create zip file
         $path = tempnam(sys_get_temp_dir(), 'tmp');
         $zip = new ZipArchive();
@@ -186,19 +208,18 @@ class PorticoExportPlugin extends ImportExportPlugin
             throw new Exception(__('plugins.importexport.portico.export.failure.creatingFile'));
         }
         try {
-            $issueDao = DAORegistry::getDAO('IssueDAO');
             foreach ($issueIds as $issueId) {
-                if (!($issue = $issueDao->getById($issueId, $this->_context->getId()))) {
+                if (!($issue = Repo::issue()->get($issueId, $this->_context->getId()))) {
                     throw new Exception(__('plugins.importexport.portico.export.failure.loadingIssue', ['issueId' => $issueId]));
                 }
 
                 // add submission XML
-                $submissions = Services::get('submission')->getMany([
-                    'contextId' => $this->_context->getId(),
-                    'issueIds' => [$issueId],
-                    'orderBy' => 'seq',
-                    'orderDirection' => 'ASC',
-                ]);
+                $submissionCollector = Repo::submission()->getCollector();
+                $submissions = $submissionCollector
+                    ->filterByContextIds([$this->_context->getId()])
+                    ->filterByIssueIds([$issueId])
+                    ->orderBy($submissionCollector::ORDERBY_SEQUENCE, $submissionCollector::ORDER_DIR_ASC)
+                    ->getMany();
                 foreach ($submissions as $article) {
                     $document = new PorticoExportDom($this->_context, $issue, $article);
                     $articlePathName = $article->getId() . '/' . $article->getId() . '.xml';
@@ -209,9 +230,8 @@ class PorticoExportPlugin extends ImportExportPlugin
 
                     // add galleys
                     $fileService = Services::get('file');
-                    $submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO');
                     foreach ($article->getGalleys() as $galley) {
-                        $submissionFile = $submissionFileDao->getById($galley->getData('submissionFileId'));
+                        $submissionFile = Repo::submissionFile()->get($galley->getData('submissionFileId'));
                         if (!$submissionFile) {
                             continue;
                         }
@@ -243,7 +263,6 @@ class PorticoExportPlugin extends ImportExportPlugin
             $user = $request->getUser();
             $this->addLocaleData();
             AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON, LOCALE_COMPONENT_PKP_MANAGER);
-            $this->import('PorticoSettingsForm');
             $form = new PorticoSettingsForm($this, $request->getContext()->getId());
 
             if ($request->getUserVar('save')) {
@@ -310,4 +329,8 @@ class PorticoExportPlugin extends ImportExportPlugin
     {
         return __('plugins.importexport.portico.description.short');
     }
+}
+
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\plugins\importexport\portico\PorticoExportPlugin', '\PorticoExportPlugin');
 }

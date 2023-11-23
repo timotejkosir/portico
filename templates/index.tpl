@@ -25,7 +25,7 @@
 		<li{if $porticoErrorMessage || $porticoSuccessMessage} class="ui-tabs-active"{/if}><a href="#exportIssues-tab">{translate key="plugins.importexport.portico.export.issues"}</a></li>
 	</ul>
 	<div id="settings-tab">
-		{capture assign=porticoSettingsGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.settings.plugins.settingsPluginGridHandler" op="manage" plugin="PorticoExportPlugin" category="importexport" verb="settings" escape=false}{/capture}
+		{capture assign=porticoSettingsGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.settings.plugins.settingsPluginGridHandler" op="manage" plugin=$pluginName category="importexport" verb="settings" escape=false}{/capture}
 		{load_url_in_div id="porticoSettingsGridContainer" url=$porticoSettingsGridUrl}
 	</div>
 	<div id="exportIssues-tab">

@@ -15,4 +15,5 @@
 	<type>plugins.importexport</type>
 	<release>1.1.2.4</release>
 	<date>2022-03-31</date>
+	<class>PorticoExportPlugin</class>
 </version>

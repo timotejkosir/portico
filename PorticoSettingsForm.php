@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file PorticoSettingsForm.inc.php
+ * @file PorticoSettingsForm.php
  *
  * Copyright (c) 2014-2022 Simon Fraser University
  * Copyright (c) 2003-2022 John Willinsky
@@ -12,8 +12,11 @@
  * @brief Form for journal managers to modify Portico plugin settings
  */
 
+namespace APP\plugins\importexport\portico;
 
-import('lib.pkp.classes.form.Form');
+use PKP\form\Form;
+use APP\template\TemplateManager;
+use PKP\form\validation\FormValidatorArrayCustom;
 
 class PorticoSettingsForm extends Form
 {
@@ -84,7 +87,8 @@ class PorticoSettingsForm extends Form
                 'loc' => 'Library of Congress',
                 'sftp' => 'SFTP',
                 'ftp' => 'FTP',
-            ]
+            ],
+            'pluginName' => $this->plugin::class,
         ]);
         return parent::fetch($request, $template, $display);
     }

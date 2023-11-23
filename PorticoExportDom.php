@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file PorticoExportDom.inc.php
+ * @file PorticoExportDom.php
  *
  * Copyright (c) 2014-2022 Simon Fraser University
  * Copyright (c) 2003-2022 John Willinsky
@@ -10,6 +10,22 @@
  * @class PorticoExportDom
  * @brief Portico export plugin DOM functions for export
  */
+
+namespace APP\plugins\importexport\portico;
+
+use DOMImplementation;
+use DOMElement;
+use DateTimeImmutable;
+use PKP\core\PKPString;
+use PKP\galley\Galley;
+use APP\i18n\AppLocale;
+use APP\journal\Journal;
+use APP\submission\Submission;
+use APP\issue\Issue;
+use PKP\db\DAORegistry;
+use APP\facades\Repo;
+use APP\author\Author;
+use APP\core\Services;
 
 class PorticoExportDom
 {
@@ -42,9 +58,8 @@ class PorticoExportDom
         $this->_context = $context;
         $this->_issue = $issue;
         $this->_article = $article;
-        $sectionDao = DAORegistry::getDAO('SectionDAO'); /** @var SectionDAO $sectionDao */
         if ($sectionId = $this->_article->getSectionId()) {
-            $this->_section = $sectionDao->getById($sectionId);
+            $this->_section = Repo::section()->get($sectionId);
         }
 
         $domImplementation = new DOMImplementation();
@@ -232,19 +247,15 @@ class PorticoExportDom
 
     /**
      * Retrieve the file information from a galley
-     *
-     * @param ArticleGalley $galley Galley instance
-     *
      * @return array
      */
-    private function _getFileInformation(ArticleGalley $galley)
+    private function _getFileInformation(Galley $galley)
     {
         if (!($fileId = $galley->getData('submissionFileId'))) {
             return null;
         }
         $fileService = Services::get('file');
-        $submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO');
-        $submissionFile = $submissionFileDao->getById($fileId);
+        $submissionFile = Repo::submissionFile()->get($fileId);
         $file = $fileService->get($submissionFile->getData('fileId'));
         return [
             'path' => $this->_article->getId() . '/' . basename($file->path),
@@ -254,10 +265,8 @@ class PorticoExportDom
 
     /**
      * Generate the self-uri node of the article.
-     *
-     * @param ArticleGalley $galley Galley instance
      */
-    private function _buildSelfUriNode(ArticleGalley $galley): DOMElement
+    private function _buildSelfUriNode(Galley $galley): DOMElement
     {
         $doc = $this->_document;
         $node = null;
@@ -278,10 +287,8 @@ class PorticoExportDom
 
     /**
      * Generate a supplementary-material node for a galley.
-     *
-     * @param ArticleGalley $galley Galley instance
      */
-    private function _buildSupplementNode(ArticleGalley $galley): DOMElement
+    private function _buildSupplementNode(Galley $galley): DOMElement
     {
         $doc = $this->_document;
         $node = $doc->createElement('supplementary-material');
@@ -377,7 +384,7 @@ class PorticoExportDom
     private function _buildAuthors(): DOMElement
     {
         $contribGroupNode = $this->_document->createElement('contrib-group');
-        foreach ($this->_article->getAuthors() as $author) {
+        foreach ($this->_article->getCurrentPublication()->getData('authors') as $author) {
             $contribNode = $this->_buildAuthor($author);
             $contribGroupNode->appendChild($contribNode);
         }
