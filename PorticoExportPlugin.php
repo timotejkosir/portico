@@ -163,14 +163,14 @@ class PorticoExportPlugin extends ImportExportPlugin
                 case 'sftp':
                     $adapter = new \League\Flysystem\PhpseclibV3\SftpAdapter(
                         new \League\Flysystem\PhpseclibV3\SftpConnectionProvider(
-                            $credentials['hostname'],
-                            $credentials['username'],
-                            $credentials['private_key'] ? null : $credentials['password'],
-                            $credentials['private_key'] ?? null,
-                            $credentials['passphrase'] ?? null,
-                            ($credentials['port'] ?? null) ?: 22,
+                            host: $credentials['hostname'],
+                            username: $credentials['username'],
+                            password: !empty($credentials['private_key']) ? null : $credentials['password'],
+                            privateKey: $credentials['private_key'] ?? null ?: null, // Convert possible empty string to null
+                            passphrase: $credentials['passphrase'] ?? null ?: null, // Convert possible empty string to null
+                            port: $credentials['port'] ?? 22,
                         ),
-                        $credentials['path'],
+                        $credentials['path'] ?? '/',
                         \League\Flysystem\UnixVisibility\PortableVisibilityConverter::fromArray([
                             'file' => [
                                 'public' => 0640,
