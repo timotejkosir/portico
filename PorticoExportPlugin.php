@@ -38,7 +38,10 @@ class PorticoExportPlugin extends ImportExportPlugin
 
         parent::display($args, $request);
         $templateManager = TemplateManager::getManager();
-        $templateManager->assign('pluginName', self::class);
+        $templateManager->assign([
+            'pluginName' => self::class,
+            'ftpLibraryMissing' => !class_exists('\League\Flysystem\Ftp\FtpAdapter')
+        ]);
 
         switch ($route = array_shift($args)) {
             case 'settings':

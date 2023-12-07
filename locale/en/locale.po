@@ -17,6 +17,12 @@ msgstr "Settings"
 msgid "plugins.importexport.portico.displayName"
 msgstr "Portico Export Plugin"
 
+msgid "plugins.importexport.portico.ftpLibraryMissing"
+msgstr ""
+"<blockquote style=\"border: 1px solid; padding: 1em;\"><strong>⚠️ Warning:</strong> The <code>league/flysystem-ftp</code> library is missing from your server. To install it, run:\n"
+"<pre><code>composer -d lib/pkp require league/flysystem-ftp</code></pre>"
+"...or upgrade to a newer release of OJS. Until this is resolved, <strong>FTP deposits will not work</strong>. SFTP, Portico, and Library of Congress deposits can still be used without problems.</blockquote>"
+
 msgid "plugins.importexport.portico.description"
 msgstr ""
 "\n"

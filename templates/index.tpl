@@ -19,12 +19,18 @@
 			.tabs('option', 'cache', true);
 	{rdelim});
 </script>
+{capture assign="ftpWarning"}
+	{if $ftpLibraryMissing}
+		{translate key="plugins.importexport.portico.ftpLibraryMissing"}
+	{/if}
+{/capture}
 <div id="exportTabs">
 	<ul>
 		<li><a href="#settings-tab">{translate key="plugins.importexport.portico.settings"}</a></li>
 		<li{if $porticoErrorMessage || $porticoSuccessMessage} class="ui-tabs-active"{/if}><a href="#exportIssues-tab">{translate key="plugins.importexport.portico.export.issues"}</a></li>
 	</ul>
 	<div id="settings-tab">
+		{$ftpWarning}
 		{capture assign=porticoSettingsGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.settings.plugins.settingsPluginGridHandler" op="manage" plugin=$pluginName category="importexport" verb="settings" escape=false}{/capture}
 		{load_url_in_div id="porticoSettingsGridContainer" url=$porticoSettingsGridUrl}
 	</div>
@@ -47,6 +53,7 @@
 			{/literal}
 		</script>
 		<form id="exportIssuesXmlForm" class="pkp_form" action="{plugin_url path="export"}" method="post">
+			{$ftpWarning}
 			{csrf}
 			{fbvFormArea id="issuesXmlForm"}
 				{if $porticoErrorMessage}
